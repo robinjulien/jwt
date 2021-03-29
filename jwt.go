@@ -1,7 +1,16 @@
 package jwt
 
 import (
-	"encoding/base64"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+)
+
+var (
+	InvalidInput   error = errors.New("Invalid input. Cannot convert into JWT.")
+	InvalidHeader  error = errors.New("Invalid header.")
+	InvalidPayload error = errors.New("Invalid payload.")
 )
 
 type Header struct {
@@ -11,15 +20,52 @@ type Header struct {
 
 type Payload map[string]interface{}
 
-func Base64URLDecode(data []byte) ([]byte, error) {
-	dbuf := make([]byte, base64.RawURLEncoding.DecodedLen(len(data)))
-	n, err := base64.RawURLEncoding.Decode(dbuf, data)
-	return dbuf[:n], err
+type RawJWT []byte
+
+type JWT struct {
+	Header    Header
+	Payload   Payload
+	Signature []byte
 }
 
-func Base64URLEncode(data []byte) []byte {
-	dbuf := make([]byte, base64.RawURLEncoding.EncodedLen(len(data)))
-	base64.RawURLEncoding.Encode(dbuf, data)
+func VerifyRaw(raw []byte, key []byte) bool {
+	parts := bytes.Split(raw, []byte("."))
 
-	return dbuf
+	if len(parts) != 3 {
+		return false
+	}
+
+	var header Header
+	headerJSON, err := Base64URLDecode(parts[0])
+
+	if err != nil {
+		return false
+	}
+
+	err = json.Unmarshal(headerJSON, &header)
+
+	if err != nil {
+		return false
+	}
+
+	hashfn, err := GetHashFn(header.Alg)
+
+	if err != nil {
+		return false
+	}
+
+	var message []byte
+	message = append(message, parts[0]...)
+	message = append(message, '.')
+	message = append(message, parts[1]...)
+
+	fmt.Println(string(message), string(parts[2]))
+
+	signature, err := Base64URLDecode(parts[2])
+
+	if err != nil {
+		return false
+	}
+
+	return ValidMAC(message, signature, key, hashfn)
 }

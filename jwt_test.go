@@ -1,40 +1,19 @@
 package jwt
 
-import (
-	"bytes"
-	"testing"
-)
+import "testing"
 
-func TestBase64URLEncode(t *testing.T) {
-	in := [][]byte{
-		[]byte("azertyuiop"),
-		[]byte("az+/-_"),
+func Test1(t *testing.T) {
+	if !VerifyRaw(
+		[]byte("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"),
+		[]byte("your-256-bit-secret"),
+	) {
+		t.Errorf("error")
 	}
-	out := [][]byte{
-		[]byte("YXplcnR5dWlvcA"),
-		[]byte("YXorLy1f"),
-	}
-	for i, v := range in {
-		res := Base64URLEncode(v)
-		if !bytes.Equal(out[i], res) {
-			t.Errorf("Error Base64URLEncode index %d, got %s.", i, string(res))
-		}
-	}
-}
 
-func TestBase64URLDecode(t *testing.T) {
-	in := [][]byte{
-		[]byte("YXplcnR5dWlvcA"),
-		[]byte("YXorLy1f"),
-	}
-	out := [][]byte{
-		[]byte("azertyuiop"),
-		[]byte("az+/-_"),
-	}
-	for i, v := range in {
-		res, err := Base64URLDecode(v)
-		if !bytes.Equal(out[i], res) || err != nil {
-			t.Errorf("Error Base64URLDecode index %d.", i)
-		}
+	if VerifyRaw(
+		[]byte("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"),
+		[]byte("your-256-bit-secrett"),
+	) {
+		t.Errorf("error")
 	}
 }
